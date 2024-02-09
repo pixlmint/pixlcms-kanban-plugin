@@ -1,0 +1,14 @@
+{
+    "name": "pixlmint/pixlcms-kanban-plugin",
+    "description": "A Trello-like API Plugin for pixlcms",
+    "require": {
+        "ext-json":  "*",
+        "ext-zlib":  "*",
+        "pixlmint/pixl-cms": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "PixlMint\\KanbanPlugin\\": "src/"
+        }
+    }
+}
