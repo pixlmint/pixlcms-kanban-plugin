@@ -7,16 +7,20 @@ use Nacho\Models\PicoPage;
 abstract class AbstractContainerBoardItem extends AbstractBoardItem
 {
     /** @var array|CardList[]|Card[] */
-    private array $childItems;
+    private array $childItems = [];
 
     public abstract static function init(PicoPage $page): AbstractContainerBoardItem;
 
-    public function insert(CardList $list, ?int $position): int
+    protected abstract function updateMeta(): void;
+
+    public function insert(AbstractBoardItem $child, ?int $position = null): int
     {
         if (is_null($position)) {
             $position = count($this->childItems);
         }
-        array_splice($this->childItems, $position, 0, $list);
+        array_splice($this->childItems, $position, 0, [$child]);
+
+        $this->updateMeta();
 
         return $position;
     }

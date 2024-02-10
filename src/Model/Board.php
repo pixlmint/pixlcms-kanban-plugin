@@ -9,8 +9,10 @@ class Board extends AbstractContainerBoardItem
     public static function init(PicoPage $page): Board
     {
         $lists = [];
-        foreach ($page->children as $list) {
-            $lists[] = CardList::init($list);
+        if (is_array($page->children)) {
+            foreach ($page->children as $list) {
+                $lists[] = CardList::init($list);
+            }
         }
         $board = new Board($page);
         $board->updateList($lists);
@@ -18,13 +20,30 @@ class Board extends AbstractContainerBoardItem
         return $board;
     }
 
-    public function __get(string $name)
+    public function serialize(): array
     {
-        return $this->getPage()->$name;
+        return (array) $this->getPage();
+    }
+
+    public static function createNew(PicoPage $page): self
+    {
+        $board = new Board($page);
+        $page->meta->board = ['lists' => []];
+
+        return $board;
     }
 
     public function getLists(): array
     {
         return $this->getItems();
+    }
+
+    protected function updateMeta(): void
+    {
+        $page = $this->getPage();
+        $page->meta->board = ['lists' => []];
+        foreach ($this->getLists() as $list) {
+            $page->meta->board['lists'][] = $list->id;
+        }
     }
 }
