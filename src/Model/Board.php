@@ -29,6 +29,7 @@ class Board extends AbstractContainerBoardItem
     {
         $board = new Board($page);
         $page->meta->board = ['lists' => []];
+        $page->meta->kind = 'board';
 
         return $board;
     }

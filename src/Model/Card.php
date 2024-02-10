@@ -18,6 +18,9 @@ class Card extends AbstractBoardItem
 
     public static function createNew(PicoPage $page): self
     {
-        return self::init($page);
+        $page->meta->kind = 'card';
+        $card = new Card($page);
+
+        return $card;
     }
 }

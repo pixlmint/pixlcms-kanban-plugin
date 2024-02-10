@@ -29,6 +29,7 @@ class CardList extends AbstractContainerBoardItem
     {
         $list = new CardList($page);
         $page->meta->list = ['cards' => []];
+        $page->meta->kind = 'list';
 
         return $list;
     }
