@@ -1,6 +1,9 @@
 {
     "name": "pixlmint/pixlcms-kanban-plugin",
     "description": "A Trello-like API Plugin for pixlcms",
+    "license": [
+        "MIT"
+    ],
     "require": {
         "ext-json":  "*",
         "ext-zlib":  "*",
