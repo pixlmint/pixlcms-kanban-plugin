@@ -25,6 +25,18 @@ class CardList extends AbstractContainerBoardItem
         return (array) $this->getPage();
     }
 
+    public function untrackCard(string $cardUid): void
+    {
+        $children = $this->getPage()->meta->list['cards'];
+        if (!is_array($children) || !in_array($cardUid, $children)) {
+            return;
+        }
+
+        $index = array_search($cardUid, $children);
+
+        array_splice($this->getPage()->meta->list['cards'], $index, 1);
+    }
+
     public static function createNew(PicoPage $page): self
     {
         $list = new CardList($page);

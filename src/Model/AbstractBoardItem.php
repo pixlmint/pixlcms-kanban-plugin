@@ -24,8 +24,22 @@ abstract class AbstractBoardItem
         return $this->getPage()->$name;
     }
 
+    public function getUid(): ?string
+    {
+        if (!key_exists('uid', (array)$this->page->meta) || !$this->page->meta->uid) {
+            $this->generateUid();
+        }
+
+        return $this->page->meta->uid;
+    }
+
     protected function getPage(): PicoPage
     {
         return $this->page;
+    }
+
+    private function generateUid(): void
+    {
+        $this->page->meta->uid = uniqid();
     }
 }

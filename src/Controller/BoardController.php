@@ -120,10 +120,32 @@ class BoardController extends AbstractController
         }
 
         $card = $this->boardHelper->createCard($list, $cardName);
+        $list = $this->boardHelper->loadList($listId);
 
         return $this->json([
             'message' => 'Card Successfully created',
-            'listId' => $card->serialize()['id'],
+            'cardId' => $card->serialize()['id'],
+            'list' => $list->serialize(),
         ]);
+    }
+
+    public function moveCard(RequestInterface $request): Response
+    {
+        if (!$this->isGranted(CustomUserHelper::ROLE_EDITOR)) {
+            return $this->json(['message' => 'You are not authenticated'], 401);
+        }
+        if (strtoupper($request->requestMethod) !== HttpMethod::PUT) {
+            return $this->json(['message' => 'only put requests allowed'], HttpResponseCode::METHOD_NOT_ALLOWED);
+        }
+        if (!key_exists('targetListUid', $request->getBody()) || !key_exists('cardUid', $request->getBody())) {
+            return $this->json(['message' => 'No listId or card name defined'], HttpResponseCode::BAD_REQUEST);
+        }
+
+        $targetListUid = $request->getBody()['targetListUid'];
+        $cardUid = $request->getBody()['cardUid'];
+
+        $this->boardHelper->moveCard($targetListUid, $cardUid);
+
+        return $this->json(['message' => 'Success']);
     }
 }

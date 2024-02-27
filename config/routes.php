@@ -23,4 +23,9 @@ return [
         'controller' => BoardController::class,
         'function' => 'createCard',
     ],
+    [
+        'route' => '/api/board/move-card',
+        'controller' => BoardController::class,
+        'function' => 'moveCard',
+    ],
 ];

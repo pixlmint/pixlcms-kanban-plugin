@@ -5,19 +5,23 @@ namespace PixlMint\KanbanPlugin\Helper;
 use Nacho\Contracts\PageManagerInterface;
 use Nacho\Helpers\PageManager;
 use Nacho\Models\PicoPage;
+use PixlMint\CMS\Helpers\CMSConfiguration;
 use PixlMint\KanbanPlugin\Model\AbstractBoardItem;
 use PixlMint\KanbanPlugin\Model\AbstractContainerBoardItem;
 use PixlMint\KanbanPlugin\Model\Board;
 use PixlMint\KanbanPlugin\Model\Card;
 use PixlMint\KanbanPlugin\Model\CardList;
+use PixlMint\KanbanPlugin\Repository\BoardItemUidMapRepository;
 
 class BoardHelper
 {
     private PageManagerInterface $pageManager;
+    private BoardItemUidMapRepository $boardItemUidMapRepository;
 
-    public function __construct(PageManagerInterface $pageManager)
+    public function __construct(PageManagerInterface $pageManager, BoardItemUidMapRepository $boardItemUidMapRepository)
     {
         $this->pageManager = $pageManager;
+        $this->boardItemUidMapRepository = $boardItemUidMapRepository;
     }
 
     public function loadBoard(string $boardId): ?Board
@@ -41,6 +45,7 @@ class BoardHelper
         $originalIncludePageTree = PageManager::$INCLUDE_PAGE_TREE;
         PageManager::$INCLUDE_PAGE_TREE = true;
 
+        $this->pageManager->readPages();
         $listPage = $this->pageManager->getPage($listId);
         if (!$listPage) {
             return null;
@@ -76,14 +81,59 @@ class BoardHelper
     public function createCard(CardList $list, string $cardName): Card
     {
         $cardPage = $this->pageManager->create($list->id, $cardName);
-        $card = Card::init($cardPage);
+        $card = Card::createNew($cardPage);
         $list->insert($card);
         $this->storeChanges($list);
 
         return $card;
     }
 
-    private function storeChanges(AbstractBoardItem $boardItem)
+    public function moveCard(string $targetListUid, string $cardUid)
+    {
+        /** @var AbstractContainerBoardItem $list */
+        $list = $this->getBoardItemFromUid($targetListUid);
+        $card = $this->getBoardItemFromUid($cardUid);
+        $tmpOriginalParent = $this->pageManager->getPage($card->meta->parentPath);
+        $originalParent = CardList::init($tmpOriginalParent);
+        $originalParent->untrackCard($card->id);
+        $this->storeChanges($originalParent);
+        $success = $this->pageManager->move($card->id, $list->id);
+        $mapItem = $this->boardItemUidMapRepository->getEntryByUid($card->getUid());
+
+        $splMyId = explode('/', $card->id);
+        $myId = array_pop($splMyId);
+        $newId = $list->id . '/' . $myId;
+
+        $mapItem->setBoardItem($newId);
+        if (!$success) {
+            throw new \Exception("An error occurred while attempting to move $cardUid into $targetListUid");
+        }
+        PageManager::$INCLUDE_PAGE_TREE = true;
+        $this->pageManager->readPages();
+        $list = $this->getBoardItemFromUid($targetListUid);
+        $card = $this->getBoardItemFromUid($cardUid);
+        $list->insert($card);
+        PageManager::$INCLUDE_PAGE_TREE = false;
+    }
+
+    private function getBoardItemFromUid(string $uid): AbstractBoardItem
+    {
+        $item = $this->boardItemUidMapRepository->getEntryByUid($uid);
+        $itemId = $item->getBoardItem();
+        $page = $this->pageManager->getPage($itemId);
+        switch ($page->meta->kind) {
+            case 'board':
+                return Board::init($page);
+            case 'list':
+                return CardList::init($page);
+            case 'card':
+                return Card::init($page);
+        }
+
+        throw new \Exception('No matching item found for page with id ' . $page->id);
+    }
+
+    private function storeChanges(AbstractBoardItem $boardItem): void
     {
         if ($boardItem instanceof AbstractContainerBoardItem) {
             foreach ($boardItem->getItems() as $childItem) {
@@ -91,9 +141,13 @@ class BoardHelper
             }
         }
 
+        $uidMapItem = $this->boardItemUidMapRepository->getEntryByUid($boardItem->getUid());
+        $uidMapItem->setBoardItem($boardItem->id);
+        $this->boardItemUidMapRepository->set($uidMapItem);
+
         $pageId = $boardItem->id;
         $content = $boardItem->raw_content ?? "";
-        $meta = (array) $boardItem->meta;
+        $meta = (array)$boardItem->meta;
         $this->pageManager->editPage($pageId, $content, $meta);
     }
 }
