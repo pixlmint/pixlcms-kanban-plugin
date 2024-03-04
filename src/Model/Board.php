@@ -10,8 +10,12 @@ class Board extends AbstractContainerBoardItem
     {
         $lists = [];
         if (is_array($page->children)) {
-            foreach ($page->children as $list) {
-                $lists[] = CardList::init($list);
+            foreach ($page->meta->board['lists'] as $listId) {
+                foreach ($page->children as $list) {
+                    if ($listId === $list->id) {
+                        $lists[] = CardList::init($list);
+                    }
+                }
             }
         }
         $board = new Board($page);
