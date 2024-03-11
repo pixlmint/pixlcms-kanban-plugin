@@ -46,7 +46,12 @@ class Board extends AbstractContainerBoardItem
     protected function updateMeta(): void
     {
         $page = $this->getPage();
-        $page->meta->board = ['lists' => []];
+        if (!key_exists('board', (array) $page->meta)) {
+            $page->meta->board = [];
+        }
+        if (!key_exists('lists', $page->meta->board)) {
+            $page->meta->board['lists'] = [];
+        }
         foreach ($this->getLists() as $list) {
             $page->meta->board['lists'][] = $list->id;
         }
