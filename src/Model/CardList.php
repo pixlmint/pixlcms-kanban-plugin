@@ -22,7 +22,7 @@ class CardList extends AbstractContainerBoardItem
 
     public function serialize(): array
     {
-        return (array) $this->getPage();
+        return $this->getPage()->toArray();
     }
 
     public function untrackCard(string $cardUid): void

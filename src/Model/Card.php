@@ -13,7 +13,7 @@ class Card extends AbstractBoardItem
 
     public function serialize(): array
     {
-        return (array) $this->getPage();
+        return $this->getPage()->toArray();
     }
 
     public static function createNew(PicoPage $page): self

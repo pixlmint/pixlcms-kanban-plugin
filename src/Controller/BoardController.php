@@ -6,6 +6,8 @@ use Nacho\Contracts\PageManagerInterface;
 use Nacho\Contracts\RequestInterface;
 use Nacho\Contracts\Response;
 use Nacho\Controllers\AbstractController;
+use Nacho\Helpers\HookHandler;
+use Nacho\Hooks\NachoAnchors\PostHandleUpdateAnchor;
 use Nacho\Models\HttpMethod;
 use Nacho\Models\HttpResponseCode;
 use PixlMint\CMS\Helpers\CustomUserHelper;
@@ -15,21 +17,23 @@ class BoardController extends AbstractController
 {
     private BoardHelper $boardHelper;
     private PageManagerInterface $pageManager;
+    private HookHandler $hookHandler;
 
-    public function __construct(BoardHelper $boardHelper, PageManagerInterface $pageManager)
+    public function __construct(BoardHelper $boardHelper, PageManagerInterface $pageManager, HookHandler $hookHandler)
     {
         parent::__construct();
         $this->boardHelper = $boardHelper;
         $this->pageManager = $pageManager;
+        $this->hookHandler = $hookHandler;
     }
 
     public function loadBoard(RequestInterface $request): Response
     {
-        if (!key_exists('board', $request->getBody())) {
+        if (!$request->getBody()->has('board')) {
             return $this->json(['message' => 'No Board ID defined'], 400);
         }
 
-        $board = $this->boardHelper->loadBoard($request->getBody()['board']);
+        $board = $this->boardHelper->loadBoard($request->getBody()->get('board'));
 
         if (!$board) {
             return $this->json(['message' => 'Unable to find board with id '. $request->getBody()['board']], HttpResponseCode::NOT_FOUND);
@@ -48,12 +52,12 @@ class BoardController extends AbstractController
         if (strtoupper($request->requestMethod) !== HttpMethod::POST) {
             return $this->json(['message' => 'only post requests allowed'], HttpResponseCode::METHOD_NOT_ALLOWED);
         }
-        if (!key_exists('parentPage', $request->getBody()) || !key_exists('name', $request->getBody())) {
+        if (!$request->getBody()->has('parentPage') || !$request->getBody()->has('name')) {
             return $this->json(['message' => 'No Parent ID or board name defined'], HttpResponseCode::BAD_REQUEST);
         }
 
-        $parentPageId = $request->getBody()['parentPage'];
-        $boardName = $request->getBody()['name'];
+        $parentPageId = $request->getBody()->get('parentPage');
+        $boardName = $request->getBody()->get('name');
 
         $parentPage = $this->pageManager->getPage($parentPageId);
 
@@ -62,6 +66,7 @@ class BoardController extends AbstractController
         }
 
         $board = $this->boardHelper->createBoard($parentPage, $boardName);
+        $this->hookHandler->executeHook(PostHandleUpdateAnchor::getName(), ['entry' => $this->pageManager->getPage($board->serialize()['id'])]);
 
         return $this->json([
             'message' => 'Board Successfully created',
@@ -77,12 +82,12 @@ class BoardController extends AbstractController
         if (strtoupper($request->requestMethod) !== HttpMethod::POST) {
             return $this->json(['message' => 'only post requests allowed'], HttpResponseCode::METHOD_NOT_ALLOWED);
         }
-        if (!key_exists('boardId', $request->getBody()) || !key_exists('name', $request->getBody())) {
+        if (!$request->getBody()->has('boardId') || !$request->getBody()->has('name')) {
             return $this->json(['message' => 'No boardId or list name defined'], HttpResponseCode::BAD_REQUEST);
         }
 
-        $boardId = $request->getBody()['boardId'];
-        $listName = $request->getBody()['name'];
+        $boardId = $request->getBody()->get('boardId');
+        $listName = $request->getBody()->get('name');
 
         $board = $this->boardHelper->loadBoard($boardId);
 
@@ -106,12 +111,12 @@ class BoardController extends AbstractController
         if (strtoupper($request->requestMethod) !== HttpMethod::POST) {
             return $this->json(['message' => 'only post requests allowed'], HttpResponseCode::METHOD_NOT_ALLOWED);
         }
-        if (!key_exists('listId', $request->getBody()) || !key_exists('name', $request->getBody())) {
+        if (!$request->getBody()->has('listId') || !$request->getBody()->has('name')) {
             return $this->json(['message' => 'No listId or card name defined'], HttpResponseCode::BAD_REQUEST);
         }
 
-        $listId = $request->getBody()['listId'];
-        $cardName = $request->getBody()['name'];
+        $listId = $request->getBody()->get('listId');
+        $cardName = $request->getBody()->get('name');
 
         $list = $this->boardHelper->loadList($listId);
 
@@ -137,7 +142,7 @@ class BoardController extends AbstractController
         if (strtoupper($request->requestMethod) !== HttpMethod::PUT) {
             return $this->json(['message' => 'only put requests allowed'], HttpResponseCode::METHOD_NOT_ALLOWED);
         }
-        if (!key_exists('targetListUid', $request->getBody()) || !key_exists('cardUid', $request->getBody())) {
+        if (!$request->getBody()->has('targetListUid') || !$request->getBody()->has('cardUid')) {
             return $this->json(['message' => 'No listId or card name defined'], HttpResponseCode::BAD_REQUEST);
         }
 

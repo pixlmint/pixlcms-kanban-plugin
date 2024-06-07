@@ -26,7 +26,7 @@ abstract class AbstractBoardItem
 
     public function getUid(): ?string
     {
-        if (!key_exists('uid', (array)$this->page->meta) || !$this->page->meta->uid) {
+        if (!key_exists('uid', $this->page->meta->toArray()) || !$this->page->meta->uid) {
             $this->generateUid();
         }
 

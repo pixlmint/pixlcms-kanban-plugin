@@ -26,7 +26,7 @@ class Board extends AbstractContainerBoardItem
 
     public function serialize(): array
     {
-        return (array) $this->getPage();
+        return $this->getPage()->toArray();
     }
 
     public static function createNew(PicoPage $page): self
@@ -46,7 +46,7 @@ class Board extends AbstractContainerBoardItem
     protected function updateMeta(): void
     {
         $page = $this->getPage();
-        if (!key_exists('board', (array) $page->meta)) {
+        if (!key_exists('board', $page->meta->toArray())) {
             $page->meta->board = [];
         }
         if (!key_exists('lists', $page->meta->board)) {

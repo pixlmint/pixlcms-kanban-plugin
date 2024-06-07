@@ -147,7 +147,7 @@ class BoardHelper
 
         $pageId = $boardItem->id;
         $content = $boardItem->raw_content ?? "";
-        $meta = (array)$boardItem->meta;
+        $meta = $boardItem->meta->toArray();
         $this->pageManager->editPage($pageId, $content, $meta);
     }
 }
