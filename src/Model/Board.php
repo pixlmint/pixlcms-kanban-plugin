@@ -53,9 +53,14 @@ class Board extends AbstractContainerBoardItem
             $page->meta->board['lists'] = [];
         }
         foreach ($this->getLists() as $list) {
-            if (!in_array($list->id, $page->meta->board['lists'])) {
-                $page->meta->board['lists'][] = $list->id;
+            $b = $page->meta->getAdditionalValues()->get('board');
+            if (is_null($b['lists'])) {
+                $b['lists'] = [];
             }
+            if (!in_array($list->id, $b['lists'])) {
+                $b['lists'][] = $list->id;
+            }
+            $page->meta->getAdditionalValues()->set('board', $b);
         }
     }
 }

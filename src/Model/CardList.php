@@ -27,21 +27,24 @@ class CardList extends AbstractContainerBoardItem
 
     public function untrackCard(string $cardUid): void
     {
-        $children = $this->getPage()->meta->list['cards'];
+        $list = $this->getPage()->meta->getAdditionalValues()->get('list');
+        $children = $list['cards'];
         if (!is_array($children) || !in_array($cardUid, $children)) {
             return;
         }
 
         $index = array_search($cardUid, $children);
 
-        array_splice($this->getPage()->meta->list['cards'], $index, 1);
+        array_splice($children, $index, 1);
+        $list['cards'] = $children;
+        $this->getPage()->meta->getAdditionalValues()->set('list', $list);
     }
 
     public static function createNew(PicoPage $page): self
     {
         $list = new CardList($page);
-        $page->meta->list = ['cards' => []];
-        $page->meta->kind = 'list';
+        $page->meta->getAdditionalValues()->set('list', ['cards' => []]);
+        $page->meta->getAdditionalValues()->set('kind', 'list');
 
         return $list;
     }
@@ -49,9 +52,9 @@ class CardList extends AbstractContainerBoardItem
     protected function updateMeta(): void
     {
         $page = $this->getPage();
-        $page->meta->list = ['cards' => []];
-        foreach ($this->getItems() as $card) {
-            $page->meta->list['cards'][] = $card->id;
-        }
+        $cards = array_map(function ($c) {
+            return $c->id;
+        }, $this->getItems());
+        $page->meta->getAdditionalValues()->set('list', ['cards' => $cards]);
     }
 }
