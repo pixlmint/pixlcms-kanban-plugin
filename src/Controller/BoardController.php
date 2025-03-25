@@ -153,4 +153,23 @@ class BoardController extends AbstractController
 
         return $this->json(['message' => 'Success']);
     }
+
+    public function deleteCard(RequestInterface $request): Response
+    {
+        if (!$this->isGranted(CustomUserHelper::ROLE_EDITOR)) {
+            return $this->json(['message' => 'You are not authenticated'], 401);
+        }
+        if (strtoupper($request->requestMethod) !== HttpMethod::DELETE) {
+            return $this->json(['message' => 'only delete requests allowed'], HttpResponseCode::METHOD_NOT_ALLOWED);
+        }
+        if (!$request->getBody()->has('cardUid')) {
+            return $this->json(['message' => 'No card name defined'], HttpResponseCode::BAD_REQUEST);
+        }
+
+        $cardUid = $request->getBody()['cardUid'];
+
+        $this->boardHelper->deleteCard($cardUid);
+
+        return $this->json(['message' => 'Success']);
+    }
 }

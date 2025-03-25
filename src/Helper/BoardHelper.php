@@ -116,6 +116,20 @@ class BoardHelper
         PageManager::$INCLUDE_PAGE_TREE = false;
     }
 
+    public function deleteCard(string $cardUid)
+    {
+        $card = $this->getBoardItemFromUid($cardUid);
+
+        $tmpParent = $this->pageManager->getPage($card->meta->parentPath);
+        $parent = CardList::init($tmpParent);
+        $parent->untrackCard($card->id);
+
+        $this->pageManager->delete($card->id);
+        PageManager::$INCLUDE_PAGE_TREE = true;
+        $this->pageManager->readPages();
+        PageManager::$INCLUDE_PAGE_TREE = false;
+    }
+
     private function getBoardItemFromUid(string $uid): AbstractBoardItem
     {
         $item = $this->boardItemUidMapRepository->getEntryByUid($uid);

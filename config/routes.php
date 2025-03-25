@@ -28,4 +28,9 @@ return [
         'controller' => BoardController::class,
         'function' => 'moveCard',
     ],
+    [
+        'route' => '/api/board/delete-card',
+        'controller' => BoardController::class,
+        'function' => 'deleteCard',
+    ],
 ];
